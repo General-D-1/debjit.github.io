@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Spotify Playlists</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@300;500;700&display=swap">
+  <style>
+    /* CSS will be embedded for this demo */
+    :root {
+      --spotify-green: #1DB954;
+      --spotify-dark: #191414;
+      --gradient-start: #1DB954;
+      --gradient-end: #1ED760;
+      --text-primary: #ffffff;
+      --text-secondary: #b3b3b3;
+      --bg-primary: #121212;
+      --bg-secondary: #181818;
+      --bg-tertiary: #282828;
+      --now-playing-bg: rgba(18, 18, 18, 0.9);
+    }
+
+    [data-theme="light"] {
+      --text-primary: #191414;
+      --text-secondary: #535353;
+      --bg-primary: #f8f8f8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f0f0f0;
+      --now-playing-bg: rgba(255, 255, 255, 0.9);
+    }
+
+    @keyframes ambientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(-45deg, var(--bg-tertiary), var(--bg-secondary), var(--bg-tertiary), var(--bg-primary));
+      background-size: 400% 400%;
+      animation: ambientBG 25s ease infinite;
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      transition: background 0.5s ease;
+    }
+
+    .particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 60px 20px 100px; /* Extra padding for now playing bar */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      margin-bottom: 40px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 15px rgba(30, 215, 96, 0.3);
+    }
+
+    .spotify-logo {
+      display: flex;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .spotify-logo svg {
+      width: 50px;
+      height: 50px;
+      filter: drop-shadow(0 0 5px rgba(29, 185, 84, 0.5));
+    }
+
+    .playlist-container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .playlist {
+      background: rgba(25, 25, 25, 0.7);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .playlist:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(30, 215, 96, 0.15);
+      border-color: rgba(30, 215, 96, 0.2);
+    }
+
+    .title-bar {
+      padding: 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .title-bar:hover {
+      background: rgba(40, 40, 40, 0.5);
+    }
+
+    .playlist-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .cover-art {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+    }
+
+    .title-bar:hover .cover-art {
+      transform: scale(1.05);
+    }
+
+    .title-bar h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .track-count {
+      margin: 5px 0 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 300;
+    }
+
+    .arrow {
+      width: 24px;
+      height: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .arrow svg {
+      width: 100%;
+      height: 100%;
+      color: var(--text-secondary);
+    }
+
+    .title-bar:hover .arrow svg {
+      color: var(--spotify-green);
+    }
+
+    .playlist-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+    }
+
+    .playlist-content iframe {
+      width: 100%;
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .playlist.open .playlist-content {
+      max-height: 400px;
+    }
+
+    .playlist.open .arrow {
+      transform: rotate(180deg);
+    }
+
+    .playlist.open .arrow svg {
+      color: var(--spotify-green);
+    }
+
+    /* Now Playing Bar */
+    .now-playing {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: var(--now-playing-bg);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 100;
+      transition: all 0.3s ease;
+    }
+
+    .now-playing.hidden {
+      transform: translateY(100%);
+    }
+
+    .now-playing-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex: 1;
+    }
+
+    .now-playing-cover {
+      width: 50px;
+      height: 50px;
+      border-radius: 5px;
+      background-size: cover;
+      animation: pulse 2s infinite;
+    }
+
+    .now-playing-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .now-playing-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .now-playing-artist {
+      font-size: 0.8rem;
+      margin: 5px 0 0;
+      color: var(--text-secondary);
+    }
+
+    .now-playing-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .control-btn {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover {
+      color: var(--spotify-green);
+      transform: scale(1.1);
+    }
+
+    .play-pause {
+      font-size: 1.8rem;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.3);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-primary);
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(0, 0, 0, 0.5);
+      transform: scale(1.1);
+    }
+
+    /* Dynamic Theme Overlay */
+    .theme-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+      }
+      
+      .spotify-logo svg {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .title-bar {
+        padding: 15px;
+      }
+      
+      .cover-art {
+        width: 50px;
+        height: 50px;
+      }
+      
+      .title-bar h2 {
+        font-size: 1.1rem;
+      }
+      
+      .track-count {
+        font-size: 0.75rem;
+      }
+
+      .now-playing {
+        padding: 0 10px;
+      }
+
+      .now-playing-cover {
+        width: 40px;
+        height: 40px;
+      }
+
+      .now-playing-title {
+        font-size: 0.85rem;
+      }
+
+      .now-playing-artist {
+        font-size: 0.7rem;
+      }
+
+      .control-btn {
+        font-size: 1rem;
+      }
+
+      .play-pause {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles-js"></div>
+  <div class="theme-overlay" id="themeOverlay"></div>
+  
+  <button class="theme-toggle" id="themeToggle">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </button>
+
+  <div class="content">
+    <h1>
+      <span class="gradient-text">My Playlists</span>
+      <span class="spotify-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" fill="#1DB954">
+          <path d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 26.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z"/>
+        </svg>
+      </span>
+    </h1>
+
+    <div class="playlist-container">
+      <!-- Playlist 1 -->
+      <div class="playlist" data-theme-color="#4056a1">
+        <div class="title-bar" onclick="togglePlaylist(this)">
+          <div class="playlist-info">
+            <div class="cover-art" style="background-image: url('https://i.scdn.co/image/ab67706c0000bebbc0fca9b7b8e654a5a0c170e0')"></div>
+            <div>
+              <h2>Anesthesia</h2>
+              <p class="track-count">12 tracks • Chill, Ambient</p>
+            </div>
+          </div>
+          <div class="arrow">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="playlist-content">
+          <iframe src="https://open.spotify.com/embed/playlist/0aDfr0LSX69OvShGggtfsv?utm_source=generator&theme=0" height="352" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </div>
+      </div>
+
+      <!-- Playlist 2 -->
+      <div class="playlist" data-theme-color="#d79922">
+        <div class="title-bar" onclick="togglePlaylist(this)">
+          <div class="playlist-info">
+            <div class="cover-art" style="background-image: url('https://i.scdn.co/image/ab67706c0000bebb6c579a2b5e9d9c7a0b9b0e5c')"></div>
+            <div>
+              <h2>Life</h2>
+              <p class="track-count">24 tracks • Uplifting, Motivational</p>
+            </div>
+          </div>
+          <div class="arrow">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="playlist-content">
+          <iframe src="https://open.spotify.com/embed/playlist/1u0ONyXjKEurTjsKrp4Klt?utm_source=generator" height="352" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </div>
+      </div>
+
+      <!-- Playlist 3 -->
+      <div class="playlist" data-theme-color="#f13c20">
+        <div class="title-bar" onclick="togglePlaylist(this)">
+          <div class="playlist-info">
+            <div class="cover-art" style="background-image: url('https://i.scdn.co/image/ab67706c0000bebbc0fca9b7b8e654a5a0c170e0')"></div>
+            <div>
+              <h2>Unique</h2>
+              <p class="track-count">18 tracks • Experimental, Eclectic</p>
+            </div>
+          </div>
+          <div class="arrow">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="playlist-content">
+          <iframe src="https://open.spotify.com/embed/playlist/6fNYGhho571mG49715vOZq?utm_source=generator" height="352" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </div>
+      </div>
+
+      <!-- Playlist 4 -->
+      <div class="playlist" data-theme-color="#c5cbe3">
+        <div class="title-bar" onclick="togglePlaylist(this)">
+          <div class="playlist-info">
+            <div class="cover-art" style="background-image: url('https://i.scdn.co/image/ab67706c0000bebbc0fca9b7b8e654a5a0c170e0')"></div>
+            <div>
+              <h2>Old School</h2>
+              <p class="track-count">30 tracks • Classic, Retro</p>
+            </div>
+          </div>
+          <div class="arrow">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="playlist-content">
+          <iframe src="https://open.spotify.com/embed/playlist/5QkmnyaKVptW95t3fjwOVw?utm_source=generator" height="352" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Now Playing Bar -->
+  <div class="now-playing hidden" id="nowPlaying">
+    <div class="now-playing-info">
+      <div class="now-playing-cover" id="nowPlayingCover"></div>
+      <div class="now-playing-text">
+        <p class="now-playing-title" id="nowPlayingTitle">Not Playing</p>
+        <p class="now-playing-artist" id="nowPlayingArtist">Select a track</p>
+      </div>
+    </div>
+    <div class="now-playing-controls">
+      <button class="control-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 19 2 12 11 5 11 19"></polygon>
+          <polygon points="22 19 13 12 22 5 22 19"></polygon>
+        </svg>
+      </button>
+      <button class="control-btn play-pause">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+      </button>
+      <button class="control-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 19 22 12 13 5 13 19"></polygon>
+          <polygon points="2 19 11 12 2 5 2 19"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script>
+    // JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize particles.js
+      particlesJS("particles-js", {
+        "particles": {
+          "number": {
+            "value": 80,
+            "density": {
+              "enable": true,
+              "value_area": 800
+            }
+          },
+          "color": {
+            "value": "#1DB954"
+          },
+          "shape": {
+            "type": "circle",
+            "stroke": {
+              "width": 0,
+              "color": "#000000"
+            },
+            "polygon": {
+              "nb_sides": 5
+            }
+          },
+          "opacity": {
+            "value": 0.3,
+            "random": true,
+            "anim": {
+              "enable": false,
+              "speed": 1,
+              "opacity_min": 0.1,
+              "sync": false
+            }
+          },
+          "size": {
+            "value": 3,
+            "random": true,
+            "anim": {
+              "enable": false,
+              "speed": 40,
+              "size_min": 0.1,
+              "sync": false
+            }
+          },
+          "line_linked": {
+            "enable": true,
+            "distance": 150,
+            "color": "#1DB954",
+            "opacity": 0.2,
+            "width": 1
+          },
+          "move": {
+            "enable": true,
+            "speed": 2,
+            "direction": "none",
+            "random": true,
+            "straight": false,
+            "out_mode": "out",
+            "bounce": false,
+            "attract": {
+              "enable": false,
+              "rotateX": 600,
+              "rotateY": 1200
+            }
+          }
+        },
+        "interactivity": {
+          "detect_on": "canvas",
+          "events": {
+            "onhover": {
+              "enable": true,
+              "mode": "grab"
+            },
+            "onclick": {
+              "enable": true,
+              "mode": "push"
+            },
+            "resize": true
+          },
+          "modes": {
+            "grab": {
+              "distance": 140,
+              "line_linked": {
+                "opacity": 0.5
+              }
+            },
+            "push": {
+              "particles_nb": 4
+            }
+          }
+        },
+        "retina_detect": true
+      });
+
+      // Theme Toggle
+      const themeToggle = document.getElementById('themeToggle');
+      const themeOverlay = document.getElementById('themeOverlay');
+      
+      themeToggle.addEventListener('click', () => {
+        document.body.setAttribute('data-theme', 
+          document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light'
+        );
+        
+        // Update icon
+        const isLight = document.body.getAttribute('data-theme') === 'light';
+        themeToggle.innerHTML = isLight ? 
+          `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>` :
+          `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>`;
+      });
+
+      // Set initial theme to dark
+      document.body.setAttribute('data-theme', 'dark');
+
+      // Playlist toggle functionality
+      document.querySelectorAll('.playlist').forEach(playlist => {
+        const titleBar = playlist.querySelector('.title-bar');
+        const content = playlist.querySelector('.playlist-content');
+        
+        titleBar.addEventListener('click', () => {
+          // Apply theme color when opening
+          if (!playlist.classList.contains('open')) {
+            const themeColor = playlist.getAttribute('data-theme-color');
+            themeOverlay.style.background = `linear-gradient(to bottom, ${themeColor}99, transparent)`;
+            themeOverlay.style.opacity = '0.6';
+          } else {
+            themeOverlay.style.opacity = '0';
+          }
+          
+          // Close all other playlists
+          document.querySelectorAll('.playlist').forEach(p => {
+            if (p !== playlist && p.classList.contains('open')) {
+              p.classList.remove('open');
+              p.querySelector('.playlist-content').style.maxHeight = '0';
+            }
+          });
+          
+          // Toggle current playlist
+          playlist.classList.toggle('open');
+          if (playlist.classList.contains('open')) {
+            content.style.maxHeight = `${content.scrollHeight}px`;
+            
+            // Show now playing bar with playlist info
+            const nowPlaying = document.getElementById('nowPlaying');
+            const playlistTitle = playlist.querySelector('h2').textContent;
+            const playlistCover = playlist.querySelector('.cover-art').style.backgroundImage;
+            
+            document.getElementById('nowPlayingTitle').textContent = `Playlist: ${playlistTitle}`;
+            document.getElementById('nowPlayingArtist').textContent = playlist.querySelector('.track-count').textContent;
+            document.getElementById('nowPlayingCover').style.backgroundImage = playlistCover;
+            
+            nowPlaying.classList.remove('hidden');
+          } else {
+            content.style.maxHeight = '0';
+          }
+        });
+      });
+
+      // Simulate play/pause functionality
+      const playPauseBtn = document.querySelector('.play-pause');
+      let isPlaying = false;
+      
+      playPauseBtn.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        playPauseBtn.innerHTML = isPlaying ? 
+          `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>` :
+          `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>`;
+        
+        // Pulse animation when playing
+        const cover = document.getElementById('nowPlayingCover');
+        if (isPlaying) {
+          cover.style.animation = 'pulse 2s infinite';
+        } else {
+          cover.style.animation = 'none';
+        }
+      });
+
+      // Add ripple effect to title bars
+      document.querySelectorAll('.title-bar').forEach(bar => {
+        bar.addEventListener('click', function(e) {
+          let x = e.clientX - e.target.getBoundingClientRect().left;
+          let y = e.clientY - e.target.getBoundingClientRect().top;
+          
+          let ripple = document.createElement('span');
+          ripple.classList.add('ripple');
+          ripple.style.left = `${x}px`;
+          ripple.style.top = `${y}px`;
+          
+          this.appendChild(ripple);
+          
+          setTimeout(() => {
+            ripple.remove();
+          }, 1000);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
